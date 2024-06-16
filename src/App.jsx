@@ -13,7 +13,7 @@ function App() {
   const [getkey, setGetkey] = useState(null)
   const [webSocketState, setWebSocketState] = useState([]);
 
-  
+
   const setkeyvalue = async()=>{
     // console.log(key, value , timer)
     try {
@@ -70,6 +70,7 @@ function App() {
               const newState = [...prevState];
               const messageObjKey = messageObj.key; 
               console.log("hi messageObjeKey - ", messageObjKey)
+              console.log("sex")
               const index = newState.findIndex(obj => obj.key === messageObjKey);
 
               console.log("hi index",{index})
@@ -135,11 +136,7 @@ function App() {
           <p className='px-2 py-2  my-2 text-white'>{getkey?`value = ${getkey}`:""}</p>
         </div>
 
-        {webSocketState.map(obj => {
-          console.log("hi", obj)
-          return <Obj {...obj}/>
-        }
-          )}
+        {webSocketState.map(obj =>  <Obj Key= {obj.key} value={obj.value} time={obj.time_left}/>)}
      
       </div>
      

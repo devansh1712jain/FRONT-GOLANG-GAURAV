@@ -1,9 +1,8 @@
-export default function Obj(para){
-    console.log("hiasdi" ,{para})
-    return <div>hi there</div>
-    // return  <div className="">
-    //             <div>{key}</div>
-    //             <div>{value}</div>
-    //             <div>{time}</div>
-    // </div>
+export default function Obj({Key,value,time}){
+    
+    return  <div className="flex flex-row ">
+                <div>{Key}</div>
+                <div>{value}</div>
+                <div>{time}</div>
+    </div>
 }
