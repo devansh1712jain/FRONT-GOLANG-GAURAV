@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import {Link} from "react-router-dom"
+// import {Link} from "react-router-dom"
 import axios from 'axios'
 import { toast ,Toaster } from 'react-hot-toast'
+import Obj from './components/Obj'
 
 function App() {
   const [key, setkey] = useState(null)
@@ -10,10 +11,10 @@ function App() {
   const [timer, setTimer] = useState(0);
   const [data, setData] = useState(null);
   const [getkey, setGetkey] = useState(null)
-  const [webSocketState, setWebSocketState] = useState({});
+  const [webSocketState, setWebSocketState] = useState([]);
 
   const setkeyvalue = async()=>{
-    console.log(key, value , timer)
+    // console.log(key, value , timer)
     try {
       const post = await axios.post("http://ec2-54-153-173-231.ap-southeast-2.compute.amazonaws.com:8080/cache",{Key:key, Value:value, Time:timer});
       console.log("key value successfully set")
@@ -52,32 +53,48 @@ function App() {
       newSocket.send('Hello Server!');
     }
  
+    newSocket.onerror = (error) => {
+      console.error('WebSocket Error: ', error);
+    };
 
-    newSocket.onmessage = (event) => {
+    newSocket.onmessage = async(event) => {
       try {
-        const messageObj = JSON.parse(event.data);
-        console.log('WebSocket message received:', messageObj);
+        const messageObj = await JSON.parse(event.data);
+        console.log('WebSocket message received:', {messageObj});
     
         switch (messageObj.event) {
           case 'set':
-            // Update Recoil state with received message
-            setWebSocketState(prevState => ({
-              ...prevState, messageObj
-            }));
+
+          setWebSocketState(prevState => {
+              const newState = [...prevState];
+              const messageObjKey = messageObj.key; 
+              console.log("hi messageObjeKey - ", messageObjKey)
+              const index = newState.findIndex(obj => obj.key === messageObjKey);
+
+              console.log("hi index",{index})
+              if (index !== -1) {
+                // Object with the same key exists, replace it
+                newState[index] = messageObj;
+              } else {
+                console.log("set event pushed ,", {messageObj})
+                // Object with the same key does not exist, add it
+                newState.push(messageObj);
+              }
+              return newState;
+            });
+            
             break;
           case 'expired':
             // Remove the key from the Recoil state
-            setWebSocketState(prevState => ({
-              ...prevState,
-              messages: prevState.messages.filter(msg => msg.key !== messageObj.key)
-            }));
+            setWebSocketState(prevState => 
+              prevState.filter(obj => obj.key !== messageObj.key)
+            );
             break;
           case 'del':
             // Remove the key from the Recoil state
-            setWebSocketState(prevState => ({
-              ...prevState,
-              messages: prevState.messages.filter(msg => msg.key !== messageObj.key)
-            }));
+            setWebSocketState(prevState => 
+              prevState.filter(obj => obj.key !== messageObj.key)
+            );
             break;
           default:
             console.error('Unknown event type:', messageObj.event);
@@ -92,7 +109,6 @@ function App() {
     setSocket(newSocket);
     
   }, [])
-  console.log(socket)
   console.log(webSocketState)
 
   return (
@@ -118,7 +134,11 @@ function App() {
           <p className='px-2 py-2  my-2 text-white'>{getkey?`value = ${getkey}`:""}</p>
         </div>
 
-        <button><Link to='/getAll'>  Get all the key value pairs</Link></button>
+        {webSocketState.map(obj => {
+          console.log("hi", obj)
+          return <Obj {...obj}/>
+        }
+          )}
      
       </div>
      
