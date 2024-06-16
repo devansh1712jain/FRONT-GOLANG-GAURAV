@@ -51,7 +51,7 @@ function App() {
     const newSocket = new WebSocket('ws://ec2-54-153-173-231.ap-southeast-2.compute.amazonaws.com:8080/ws');
     newSocket.onopen = () => {
       console.log('Connection established');
-      newSocket.send('Hello Server!');
+      newSocket.send('get_all_data');
     }
  
     newSocket.onerror = (error) => {
@@ -62,45 +62,47 @@ function App() {
       try {
         const messageObj = await JSON.parse(event.data);
         console.log('WebSocket message received:', {messageObj});
-    
-        switch (messageObj.event) {
-          case 'set':
+        if (Array.isArray(messageObj)) {
+          setWebSocketState(messageObj);
+        } else{
+          switch (messageObj.event) {
+            case 'set':
 
-          setWebSocketState(prevState => {
-              const newState = [...prevState];
-              const messageObjKey = messageObj.key; 
-              console.log("hi messageObjeKey - ", messageObjKey)
-              console.log("sex")
-              const index = newState.findIndex(obj => obj.key === messageObjKey);
+            setWebSocketState(prevState => {
+                const newState = [...prevState];
+                const messageObjKey = messageObj.key; 
+                console.log("hi messageObjeKey - ", messageObjKey)
+                console.log("sex")
+                const index = newState.findIndex(obj => obj.key === messageObjKey);
 
-              console.log("hi index",{index})
-              if (index !== -1) {
-                // Object with the same key exists, replace it
-                newState[index] = messageObj;
-              } else {
-                console.log("set event pushed ,", {messageObj})
-                // Object with the same key does not exist, add it
-                newState.push(messageObj);
-              }
-              return newState;
-            });
-            
-            break;
-          case 'expired':
-            // Remove the key from the Recoil state
-            setWebSocketState(prevState => 
-              prevState.filter(obj => obj.key !== messageObj.key)
-            );
-            break;
-          case 'del':
-            // Remove the key from the Recoil state
-            setWebSocketState(prevState => 
-              prevState.filter(obj => obj.key !== messageObj.key)
-            );
-            break;
-          default:
-            console.error('Unknown event type:', messageObj.event);
-        }
+                console.log("hi index",{index})
+                if (index !== -1) {
+                  // Object with the same key exists, replace it
+                  newState[index] = messageObj;
+                } else {
+                  console.log("set event pushed ,", {messageObj})
+                  // Object with the same key does not exist, add it
+                  newState.push(messageObj);
+                }
+                return newState;
+              });
+              
+              break;
+            case 'expired':
+              // Remove the key from the Recoil state
+              setWebSocketState(prevState => 
+                prevState.filter(obj => obj.key !== messageObj.key)
+              );
+              break;
+            case 'del':
+              // Remove the key from the Recoil state
+              setWebSocketState(prevState => 
+                prevState.filter(obj => obj.key !== messageObj.key)
+              );
+              break;
+            default:
+              console.error('Unknown event type:', messageObj.event);
+          }}
       } catch (err) {
         console.error('Error parsing WebSocket message:', err);
       }
